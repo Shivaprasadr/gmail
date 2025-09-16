@@ -48,12 +48,12 @@ jobs:
         with:
           node-version: '18'
           cache: 'npm'
-          cache-dependency-path: 'email-cleanup/package.json'
+          cache-dependency-path: 'email-cleanup/package-lock.json'
 
       - name: 📦 Install dependencies
         run: |
           cd email-cleanup
-          npm ci --production
+          npm ci --omit=dev || npm install --omit=dev
 
       - name: 🔍 Validate configuration
         run: |

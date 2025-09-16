@@ -30,6 +30,17 @@ Solutions:
 ✅ Verify YAML syntax is correct (use YAML validator)
 ✅ Ensure repository has GitHub Actions enabled
 ✅ Check if secrets are set correctly (case-sensitive)
+✅ Verify package-lock.json exists in email-cleanup/ directory
+```
+
+**Dependencies installation fails:**
+```
+Error: npm ci requires package-lock.json
+Solutions:
+✅ Run 'npm install' in email-cleanup/ directory to generate package-lock.json
+✅ Commit package-lock.json to repository
+✅ Ensure .gitignore doesn't exclude package-lock.json
+✅ Use 'npm install' instead of 'npm ci' if lock file issues persist
 ```
 
 **Secrets not found:**
