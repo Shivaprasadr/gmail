@@ -1,0 +1,102 @@
+# Gmail Email Cleanup - Git Ignore File
+
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# Environment variables (contains sensitive credentials)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Runtime and debug logs (console output only, no file logging)
+*.log
+
+# Temporary files
+temp/
+tmp/
+.tmp/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Runtime files
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+.nyc_output/
+
+# Dependency directories
+jspm_packages/
+
+# Optional npm cache directory
+.npm
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variables file
+.env
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# next.js build output
+.next
+
+# nuxt.js build output
+.nuxt
+
+# vuepress build output
+.vuepress/dist
+
+# Serverless directories
+.serverless
+
+# Local configuration files that might contain sensitive data
+config/local.json
+config/credentials.json
+auth/
+tokens/
+
+# Build outputs
+dist/
+build/
+
+# Runtime configuration files with sensitive data
+runtime-config.json
+local-config.json
+
+# Backup files
+*.backup
+*.bak
+config/*.backup

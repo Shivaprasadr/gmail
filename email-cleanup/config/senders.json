@@ -1,0 +1,65 @@
+{
+  "description": "Example sender configuration for Gmail email cleanup service",
+  "note": "This file is used for local development only. For production, use GitHub Variables or Secrets to set SENDER_EMAILS_LIST environment variable.",
+  "lastUpdated": "2025-09-16",
+  "version": "2.0.0",
+  "senders": [
+    {
+      "email": "noreply@example.com",
+      "description": "Example promotional email sender",
+      "category": "promotional",
+      "enabled": true,
+      "addedDate": "2025-09-16",
+      "notes": "Replace with your actual sender email addresses"
+    },
+    {
+      "email": "newsletter@company.com",
+      "description": "Example newsletter sender",
+      "category": "newsletter",
+      "enabled": true,
+      "addedDate": "2025-09-16",
+      "notes": "Example entry - customize for your needs"
+    },
+    {
+      "email": "alerts@jobsite.com",
+      "description": "Example job alert sender",
+      "category": "job-alerts",
+      "enabled": false,
+      "addedDate": "2025-09-16",
+      "notes": "Set enabled: true to include in cleanup"
+    }
+  ],
+  "categories": {
+    "promotional": {
+      "description": "Marketing and promotional emails",
+      "priority": "low"
+    },
+    "newsletter": {
+      "description": "Newsletter and update emails",
+      "priority": "medium"
+    },
+    "job-alerts": {
+      "description": "Job search and career-related emails",
+      "priority": "medium"
+    },
+    "notification": {
+      "description": "Service notifications and alerts",
+      "priority": "high"
+    }
+  },
+  "instructions": {
+    "localDevelopment": "This file is used when running locally. Modify the 'senders' array for local testing.",
+    "production": "For production use, set SENDER_EMAILS_LIST as a GitHub Variable or Secret with comma-separated email addresses: 'email1@example.com,email2@example.com'",
+    "privacy": "Use GitHub Secrets instead of Variables if you want to keep your sender list private from repository users."
+  },
+  "examples": {
+    "jobSeekerList": "noreply@indeed.com,jobs@linkedin.com,alerts@glassdoor.com",
+    "newsletterCleanup": "newsletter@company1.com,updates@service2.com,news@site3.com",
+    "promotionalEmails": "deals@retailer.com,offers@brand.com,marketing@store.com"
+  },
+  "maintenance": {
+    "instructions": "Update this file for local development. For production, update the GitHub Variable/Secret SENDER_EMAILS_LIST",
+    "lastReview": "2025-09-16",
+    "nextReview": "2025-10-16"
+  }
+}

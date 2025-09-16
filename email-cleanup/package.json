@@ -1,0 +1,45 @@
+{
+  "name": "gmail-email-cleanup",
+  "version": "1.0.0",
+  "description": "Automated Gmail email cleanup service that deletes old emails from specified senders",
+  "main": "gmail-cleanup.js",
+  "scripts": {
+    "start": "node gmail-cleanup.js",
+    "validate-config": "node scripts/validate-config.js",
+    "dry-run": "DRY_RUN=true node gmail-cleanup.js",
+    "setup": "node scripts/setup-auth.js"
+  },
+  "keywords": [
+    "gmail",
+    "email",
+    "cleanup",
+    "automation",
+    "nodejs"
+  ],
+  "author": "Gmail Project Team",
+  "license": "MIT",
+  "dependencies": {
+    "googleapis": "^126.0.1"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Shivaprasadr/gmail.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Shivaprasadr/gmail/issues"
+  },
+  "homepage": "https://github.com/Shivaprasadr/gmail#readme",
+  "config": {
+    "cleanup": {
+      "daysOld": 5,
+      "maxResults": 100,
+      "rateLimitDelayMs": 1000
+    }
+  }
+}
