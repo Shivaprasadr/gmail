@@ -1,6 +1,6 @@
 # 🤖 AI-Powered Development Toolkit & Gmail Automation Suite
 
-**Comp**Perfect for anyone wanting to automate Gmail cleanup!**
+**Perfect for anyone wanting to automate Gmail cleanup!**
 
 📋 **[Setup Guide](email-cleanup/SETUP.md)** | 🔑 **[Gmail API Setup](GMAIL_API_SETUP.md)** | 💡 **[Examples](email-cleanup/EXAMPLES.md)** | 🔧 **[Troubleshooting](email-cleanup/TROUBLESHOOTING.md)**
 
