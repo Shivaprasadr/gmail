@@ -24,6 +24,11 @@ on:
         required: false
         default: '7'
         type: string
+      min_email_threshold:
+        description: 'Minimum emails to suggest adding sender to cleanup list'
+        required: false
+        default: '10'
+        type: string
 
 jobs:
   analyze-inbox:
@@ -44,6 +49,7 @@ jobs:
     outputs:
       total_emails: ${{ steps.analytics.outputs.total_emails }}
       unique_senders: ${{ steps.analytics.outputs.unique_senders }}
+      new_senders_count: ${{ steps.analytics.outputs.new_senders_count }}
       gist_url: ${{ steps.analytics.outputs.gist_url }}
       report_date: ${{ steps.analytics.outputs.report_date }}
     
@@ -72,8 +78,10 @@ jobs:
           GMAIL_CLIENT_SECRET: ${{ secrets.GMAIL_CLIENT_SECRET }}
           GMAIL_REFRESH_TOKEN: ${{ secrets.GMAIL_REFRESH_TOKEN }}
           GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
+          SENDER_EMAILS_LIST: ${{ vars.SENDER_EMAILS_LIST || secrets.SENDER_EMAILS_LIST }}
           MAX_RESULTS_PER_QUERY: '500'
           MAX_PAGES: ${{ github.event.inputs.max_pages || '20' }}
+          MIN_EMAIL_THRESHOLD: ${{ github.event.inputs.min_email_threshold || '10' }}
           RATE_LIMIT_DELAY_MS: '500'
           GIST_CLEANUP_DAYS: ${{ github.event.inputs.cleanup_old_gists || '7' }}
         run: |
@@ -93,6 +101,7 @@ jobs:
           echo "📈 Results Summary:"
           echo "   Total Emails: ${{ steps.analytics.outputs.total_emails }}"
           echo "   Unique Senders: ${{ steps.analytics.outputs.unique_senders }}"
+          echo "   New Senders to Add: ${{ steps.analytics.outputs.new_senders_count }}"
           echo ""
           if [ -n "${{ steps.analytics.outputs.gist_url }}" ]; then
             echo "📄 Full CSV Report (Private):"
@@ -100,6 +109,8 @@ jobs:
             echo ""
             echo "⚠️  The CSV link above is PRIVATE - only you can access it when logged into GitHub."
           fi
+          echo ""
+          echo "💡 Check the workflow summary for copy-paste ready sender lists!"
 
       - name: 🚨 Notify on failure
         if: failure()
@@ -126,6 +137,7 @@ jobs:
           echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
           echo "| 📧 Total Emails | ${{ needs.analyze-inbox.outputs.total_emails }} |" >> $GITHUB_STEP_SUMMARY
           echo "| 👥 Unique Senders | ${{ needs.analyze-inbox.outputs.unique_senders }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🆕 New Senders to Add | ${{ needs.analyze-inbox.outputs.new_senders_count }} |" >> $GITHUB_STEP_SUMMARY
           echo "| 📅 Report Date | ${{ needs.analyze-inbox.outputs.report_date }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ -n "${{ needs.analyze-inbox.outputs.gist_url }}" ]; then

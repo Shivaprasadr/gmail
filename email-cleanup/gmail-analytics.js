@@ -76,7 +76,9 @@ class GmailAnalyticsService {
         rateLimitDelay: parseInt(process.env.RATE_LIMIT_DELAY_MS || '500'),
         maxPages: parseInt(process.env.MAX_PAGES || '20'), // Limit pages to avoid timeout
         gistToken: process.env.GIST_TOKEN, // For private gist storage
-        outputFormat: process.env.OUTPUT_FORMAT || 'both' // 'csv', 'summary', 'both'
+        outputFormat: process.env.OUTPUT_FORMAT || 'both', // 'csv', 'summary', 'both'
+        senderEmailsList: process.env.SENDER_EMAILS_LIST || '', // Current cleanup list
+        minEmailThreshold: parseInt(process.env.MIN_EMAIL_THRESHOLD || '10') // Min emails to suggest
       };
 
       // Validate required configuration
@@ -87,11 +89,52 @@ class GmailAnalyticsService {
       console.log('📋 Configuration loaded successfully');
       console.log(`📊 Max results per query: ${this.config.maxResults}`);
       console.log(`📄 Max pages to process: ${this.config.maxPages}`);
+      console.log(`🎯 Min email threshold for suggestions: ${this.config.minEmailThreshold}`);
       
     } catch (error) {
       console.error('❌ Failed to load configuration:', error.message);
       throw error;
     }
+  }
+
+  /**
+   * Get the current cleanup list from SENDER_EMAILS_LIST
+   */
+  getCurrentCleanupList() {
+    if (!this.config.senderEmailsList || !this.config.senderEmailsList.trim()) {
+      console.log('📋 No SENDER_EMAILS_LIST configured - will show all suggestions');
+      return new Set();
+    }
+    
+    const emails = this.config.senderEmailsList
+      .split(',')
+      .map(email => email.trim().toLowerCase())
+      .filter(email => email);
+    
+    console.log(`📋 Current cleanup list has ${emails.length} senders`);
+    return new Set(emails);
+  }
+
+  /**
+   * Compare analytics results with current cleanup list
+   * Returns senders NOT in cleanup list, sorted by email count
+   */
+  getNewSendersToAdd(sortedStats, currentCleanupList, minThreshold = 10) {
+    const newSenders = sortedStats
+      .filter(([email, count]) => {
+        // Not in current cleanup list AND meets minimum threshold
+        return !currentCleanupList.has(email.toLowerCase()) && count >= minThreshold;
+      });
+    
+    return newSenders;
+  }
+
+  /**
+   * Generate copy-paste ready string for new senders
+   */
+  generateCopyPasteList(newSenders, limit = 50) {
+    const topNewSenders = newSenders.slice(0, limit);
+    return topNewSenders.map(([email]) => email).join(',');
   }
 
   /**
@@ -396,7 +439,7 @@ class GmailAnalyticsService {
   /**
    * Output results to GitHub Actions
    */
-  outputToGitHubActions(sortedStats, gistUrl) {
+  outputToGitHubActions(sortedStats, gistUrl, newSendersToAdd, copyPasteList) {
     const timestamp = new Date().toISOString();
     const totalEmails = sortedStats.reduce((sum, [, count]) => sum + count, 0);
     const uniqueSenders = sortedStats.length;
@@ -408,6 +451,7 @@ class GmailAnalyticsService {
       fs.appendFileSync(githubOutput, `total_emails=${totalEmails}\n`);
       fs.appendFileSync(githubOutput, `unique_senders=${uniqueSenders}\n`);
       fs.appendFileSync(githubOutput, `report_date=${timestamp}\n`);
+      fs.appendFileSync(githubOutput, `new_senders_count=${newSendersToAdd.length}\n`);
       if (gistUrl) {
         fs.appendFileSync(githubOutput, `gist_url=${gistUrl}\n`);
       }
@@ -425,12 +469,54 @@ class GmailAnalyticsService {
       summary += `|--------|-------|\n`;
       summary += `| 📧 Total Emails in Inbox | ${totalEmails.toLocaleString()} |\n`;
       summary += `| 👥 Unique Senders | ${uniqueSenders.toLocaleString()} |\n`;
+      summary += `| 🆕 New Senders to Add | ${newSendersToAdd.length} |\n`;
       summary += `| 📅 Report Date | ${new Date().toLocaleDateString()} |\n\n`;
       
       if (gistUrl) {
         summary += `### 📄 Full CSV Report\n`;
         summary += `🔒 **Private Gist:** [Download CSV](${gistUrl})\n\n`;
         summary += `> ⚠️ This link is private and only accessible to you when logged into GitHub.\n\n`;
+      }
+
+      // NEW SENDERS SECTION - Copy-paste ready
+      if (newSendersToAdd.length > 0) {
+        summary += `### 🆕 Senders NOT in Your Cleanup List\n\n`;
+        summary += `These high-volume senders (≥${this.config.minEmailThreshold} emails) are **not yet** in your \`SENDER_EMAILS_LIST\`.\n\n`;
+        
+        summary += `#### 📋 Top ${Math.min(30, newSendersToAdd.length)} New Senders\n\n`;
+        summary += `| Rank | Email Address | Count | Action |\n`;
+        summary += `|------|---------------|-------|--------|\n`;
+        
+        const top30New = newSendersToAdd.slice(0, 30);
+        top30New.forEach(([email, count], index) => {
+          const category = this.categorizeEmail(email);
+          summary += `| ${index + 1} | \`${email}\` | ${count} | ${category} |\n`;
+        });
+        
+        if (newSendersToAdd.length > 30) {
+          summary += `\n*... and ${newSendersToAdd.length - 30} more new senders*\n`;
+        }
+
+        // COPY-PASTE READY SECTION
+        summary += `\n---\n\n`;
+        summary += `### 📝 Copy-Paste Ready (Append to SENDER_EMAILS_LIST)\n\n`;
+        summary += `**Top 20 new senders** - copy this and append to your variable:\n\n`;
+        summary += `\`\`\`\n`;
+        summary += `,${this.generateCopyPasteList(newSendersToAdd, 20)}\n`;
+        summary += `\`\`\`\n\n`;
+        
+        summary += `**Top 50 new senders** - for aggressive cleanup:\n\n`;
+        summary += `<details>\n<summary>Click to expand</summary>\n\n`;
+        summary += `\`\`\`\n`;
+        summary += `,${this.generateCopyPasteList(newSendersToAdd, 50)}\n`;
+        summary += `\`\`\`\n\n`;
+        summary += `</details>\n\n`;
+
+        summary += `> 💡 **How to use:** Go to Settings → Variables → Actions → Edit \`SENDER_EMAILS_LIST\` → Paste at the end\n\n`;
+        summary += `> ⚠️ **Review first!** Some senders might be important (bank statements, etc.)\n\n`;
+      } else {
+        summary += `### ✅ All High-Volume Senders Already in Cleanup List\n\n`;
+        summary += `Great job! All senders with ≥${this.config.minEmailThreshold} emails are already in your \`SENDER_EMAILS_LIST\`.\n\n`;
       }
       
       summary += `### 🏆 Top 30 Senders by Email Count\n\n`;
@@ -452,6 +538,33 @@ class GmailAnalyticsService {
       fs.appendFileSync(summaryFile, summary);
       console.log('📝 Summary written to GitHub Actions');
     }
+  }
+
+  /**
+   * Categorize email for quick review
+   */
+  categorizeEmail(email) {
+    const lowerEmail = email.toLowerCase();
+    
+    if (lowerEmail.includes('job') || lowerEmail.includes('career') || lowerEmail.includes('hire') || lowerEmail.includes('talent') || lowerEmail.includes('recruit')) {
+      return '💼 Job';
+    }
+    if (lowerEmail.includes('newsletter') || lowerEmail.includes('news@') || lowerEmail.includes('update')) {
+      return '📰 Newsletter';
+    }
+    if (lowerEmail.includes('noreply') || lowerEmail.includes('no-reply') || lowerEmail.includes('donotreply')) {
+      return '🤖 Auto';
+    }
+    if (lowerEmail.includes('alert') || lowerEmail.includes('notification')) {
+      return '🔔 Alert';
+    }
+    if (lowerEmail.includes('promo') || lowerEmail.includes('offer') || lowerEmail.includes('deal') || lowerEmail.includes('sale')) {
+      return '🛒 Promo';
+    }
+    if (lowerEmail.includes('bank') || lowerEmail.includes('statement') || lowerEmail.includes('finance')) {
+      return '🏦 Finance';
+    }
+    return '📧 Other';
   }
 
   /**
@@ -486,6 +599,9 @@ class GmailAnalyticsService {
       
       const startTime = new Date();
       
+      // Get current cleanup list for comparison
+      const currentCleanupList = this.getCurrentCleanupList();
+      
       // Get all inbox messages
       const messages = await this.getAllInboxMessages();
       
@@ -501,6 +617,16 @@ class GmailAnalyticsService {
       // Get sorted statistics
       const sortedStats = this.getSortedStats();
       
+      // Compare with current cleanup list
+      const newSendersToAdd = this.getNewSendersToAdd(
+        sortedStats, 
+        currentCleanupList, 
+        this.config.minEmailThreshold
+      );
+      
+      // Generate copy-paste list
+      const copyPasteList = this.generateCopyPasteList(newSendersToAdd, 50);
+      
       // Generate CSV
       const csvContent = this.generateCSV(sortedStats);
       
@@ -511,14 +637,14 @@ class GmailAnalyticsService {
       const gistResult = await this.saveToGist(csvContent);
       const gistUrl = gistResult ? gistResult.html_url : null;
       
-      // Output to GitHub Actions
-      this.outputToGitHubActions(sortedStats, gistUrl);
+      // Output to GitHub Actions (with new senders comparison)
+      this.outputToGitHubActions(sortedStats, gistUrl, newSendersToAdd, copyPasteList);
       
       const endTime = new Date();
       const duration = Math.round((endTime - startTime) / 1000);
       
-      // Print summary
-      this.printSummary(sortedStats, duration, gistUrl);
+      // Print summary (with new senders comparison)
+      this.printSummary(sortedStats, duration, gistUrl, newSendersToAdd, currentCleanupList);
       
       console.log('\n🎉 Gmail analytics completed successfully!');
       
@@ -531,13 +657,15 @@ class GmailAnalyticsService {
   /**
    * Print analytics summary
    */
-  printSummary(sortedStats, duration, gistUrl) {
+  printSummary(sortedStats, duration, gistUrl, newSendersToAdd, currentCleanupList) {
     const totalEmails = sortedStats.reduce((sum, [, count]) => sum + count, 0);
     
     console.log('\n📊 INBOX ANALYTICS SUMMARY');
     console.log('=' .repeat(50));
     console.log(`📧 Total emails in inbox: ${totalEmails.toLocaleString()}`);
     console.log(`👥 Unique senders: ${sortedStats.length.toLocaleString()}`);
+    console.log(`📋 Senders in cleanup list: ${currentCleanupList.size}`);
+    console.log(`🆕 New senders to add: ${newSendersToAdd.length}`);
     console.log(`⏱️  Analysis duration: ${duration} seconds`);
     
     if (gistUrl) {
@@ -549,11 +677,34 @@ class GmailAnalyticsService {
     
     const top10 = sortedStats.slice(0, 10);
     top10.forEach(([email, count], index) => {
-      console.log(`${index + 1}. ${email}: ${count} emails`);
+      const inList = currentCleanupList.has(email.toLowerCase()) ? '✅' : '🆕';
+      console.log(`${index + 1}. ${inList} ${email}: ${count} emails`);
     });
     
     if (sortedStats.length > 10) {
       console.log(`\n... and ${sortedStats.length - 10} more senders`);
+    }
+
+    // Print new senders to add
+    if (newSendersToAdd.length > 0) {
+      console.log('\n🆕 NEW SENDERS TO ADD (not in cleanup list):');
+      console.log('-'.repeat(50));
+      
+      const top20New = newSendersToAdd.slice(0, 20);
+      top20New.forEach(([email, count], index) => {
+        console.log(`${index + 1}. ${email}: ${count} emails`);
+      });
+      
+      if (newSendersToAdd.length > 20) {
+        console.log(`\n... and ${newSendersToAdd.length - 20} more new senders`);
+      }
+
+      console.log('\n📝 COPY-PASTE READY (append to SENDER_EMAILS_LIST):');
+      console.log('-'.repeat(50));
+      console.log(`,${this.generateCopyPasteList(newSendersToAdd, 20)}`);
+      console.log('-'.repeat(50));
+    } else {
+      console.log('\n✅ All high-volume senders already in cleanup list!');
     }
   }
 }
