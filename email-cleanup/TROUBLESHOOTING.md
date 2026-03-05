@@ -103,6 +103,50 @@ Solutions:
 ✅ Wait and retry later (quota resets daily)
 ```
 
+### 6. Analytics Issues (NEW)
+
+**GIST_TOKEN not configured:**
+```
+Solutions:
+✅ Create a Personal Access Token at https://github.com/settings/tokens
+✅ Select 'gist' scope when creating the token
+✅ Add token as secret named 'GIST_TOKEN' in repository settings
+✅ Token may have expired - regenerate if needed
+```
+
+**Failed to create Gist:**
+```
+Solutions:
+✅ Verify GIST_TOKEN has 'gist' scope
+✅ Check if token has expired
+✅ Ensure token is correctly copied (no extra spaces)
+✅ Check GitHub API rate limits
+```
+
+**Analytics Timeout:**
+```
+Solutions:
+✅ Reduce max_pages parameter (default: 20 = ~10,000 emails)
+✅ Run during off-peak hours
+✅ Split into multiple runs with different date ranges
+```
+
+**Cannot access private Gist:**
+```
+Solutions:
+✅ Ensure you're logged into the same GitHub account that created the Gist
+✅ Private Gists are only accessible to the creator
+✅ Check the Gist URL is correct (starts with gist.github.com)
+```
+
+**Missing senders in analytics report:**
+```
+Solutions:
+✅ Increase max_pages to scan more emails
+✅ Default 20 pages = ~10,000 emails analyzed
+✅ Very large inboxes may need higher limits
+```
+
 ## Debugging Steps
 
 ### Step 1: Enable Debug Mode

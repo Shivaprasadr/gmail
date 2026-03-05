@@ -1,10 +1,11 @@
 {
   "name": "gmail-email-cleanup",
-  "version": "1.0.0",
-  "description": "Automated Gmail email cleanup service that deletes old emails from specified senders",
+  "version": "1.1.0",
+  "description": "Automated Gmail email cleanup and analytics service",
   "main": "gmail-cleanup.js",
   "scripts": {
     "start": "node gmail-cleanup.js",
+    "analytics": "node gmail-analytics.js",
     "validate-config": "node scripts/validate-config.js",
     "dry-run": "DRY_RUN=true node gmail-cleanup.js",
     "setup": "node scripts/setup-auth.js"
@@ -13,6 +14,7 @@
     "gmail",
     "email",
     "cleanup",
+    "analytics",
     "automation",
     "nodejs"
   ],

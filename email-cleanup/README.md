@@ -4,6 +4,7 @@ An automated, production-ready system to delete old emails from specified sender
 
 ## 🚀 Features
 
+### Core Cleanup Features
 - **Ready-to-Use**: Fork and configure in 5 minutes
 - **Flexible Configuration**: Use GitHub Variables/Secrets or manual input
 - **Safe & Secure**: OAuth2 authentication, moves emails to trash (recoverable)
@@ -11,6 +12,14 @@ An automated, production-ready system to delete old emails from specified sender
 - **Privacy Options**: Keep your sender list public or private
 - **Safety Limits**: Configurable limits to prevent accidental mass deletion
 - **Dry Run Mode**: Test safely before actual cleanup
+
+### 📊 NEW: Inbox Analytics Feature
+- **Sender Analysis**: Get a complete list of all senders in your inbox
+- **Email Counts**: See how many emails each sender has sent (sorted by count)
+- **CSV Export**: Download reports as CSV for easy copying of email addresses
+- **Private Storage**: Reports saved to **private GitHub Gists** (only you can see)
+- **Auto-Cleanup**: Old reports automatically deleted after 7 days
+- **Workflow Integration**: Runs automatically after cleanup or on-demand
 
 ## 🎯 Quick Start
 
@@ -30,6 +39,63 @@ Manual trigger with: `newsletter@company1.com,updates@service2.com,marketing@bra
 
 #### One-time Cleanup:
 Use workflow inputs for specific senders and custom time ranges
+
+## 📊 Inbox Analytics (NEW)
+
+### What It Does
+The **Gmail Inbox Analytics** workflow scans your entire inbox and generates a report showing:
+- All unique sender email addresses
+- Number of emails from each sender
+- Sorted by email count (highest first)
+
+### Why Use It?
+- **Discover bulk senders** you forgot about
+- **Easily copy email addresses** to add to your cleanup list
+- **Track inbox health** over time
+- **Private reports** - only you can see them
+
+### How to Run
+
+#### Automatic (After Cleanup)
+The analytics workflow runs automatically **after each cleanup** to give you an updated view.
+
+#### Manual Trigger
+1. Go to **Actions** → **Gmail Inbox Analytics** → **Run workflow**
+2. Configure options:
+   - **Max pages**: How many pages to scan (500 emails per page)
+   - **Cleanup old gists**: Days to keep old reports (default: 7)
+3. Click **Run workflow**
+
+### Viewing Results
+
+1. **Workflow Summary**: Check the Actions tab after completion
+   - Shows top 30 senders (masked for privacy in logs)
+   - Displays total email count and unique senders
+
+2. **Full CSV Report**: Click the private Gist link
+   - Contains ALL senders with full email addresses
+   - Only accessible when logged into YOUR GitHub account
+   - Auto-deletes after 7 days
+
+### Setting Up Analytics
+
+**Required**: Create a `GIST_TOKEN` secret for private CSV storage:
+
+1. Go to [GitHub Settings → Developer settings → Personal access tokens → Tokens (classic)](https://github.com/settings/tokens)
+2. Click **Generate new token (classic)**
+3. Select scope: `gist` (Create gists)
+4. Copy the token
+5. Add to repository: **Settings** → **Secrets** → **Actions** → **New repository secret**
+   - Name: `GIST_TOKEN`
+   - Value: Your token
+
+### Using Analytics Results
+
+1. Open the private Gist CSV link from workflow output
+2. Find senders with high email counts you want to clean
+3. Copy their email addresses
+4. Add to your `SENDER_EMAILS_LIST` variable
+5. Next cleanup will include these senders!
 
 ## 🎮 Usage Options
 
@@ -114,6 +180,15 @@ The system provides clean, simple logging with:
 | `MAX_RESULTS_PER_QUERY` | 100 | Maximum emails per search query |
 | `RATE_LIMIT_DELAY_MS` | 1000 | Delay between API calls (ms) |
 | `DRY_RUN` | false | Run without actual deletions |
+
+### Analytics Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `GIST_TOKEN` | Required | GitHub token for private Gist storage |
+| `MAX_PAGES` | 20 | Maximum pages to scan (500 emails/page) |
+| `MAX_RESULTS_PER_QUERY` | 500 | Emails per API query |
+| `RATE_LIMIT_DELAY_MS` | 500 | Delay between API calls (ms) |
 
 ### Sender Configuration
 
